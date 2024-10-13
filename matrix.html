@@ -183,10 +183,7 @@
 				context.fillRect(0, 0, canvas.width, canvas.height);
 				
 				for (var i = 0; i < drops.length; i++) {
-					var randomLetter = letters[Math.floor(Math.random()*letters.length)];
-					context.fillStyle = '#0f0';
-					context.font = '15px sans-serif';
-					context.fillText(randomLetter, i * letterSize, drops[i] * letterSize);
+					drawLetter(i, drops[i]);
 					
 					if (drops[i] * letterSize <= canvas.height + letterSize) {
 						if (runMatrix || drops[i] >= 0) {
@@ -207,11 +204,8 @@
 						var yOffset = 0;
 						var bottomY = 0;
 						for (var x = centerX - click.radius; x <= centerX + click.radius; x++) {
-							var randomLetter = letters[Math.floor(Math.random()*letters.length)];
-							context.fillStyle = '#0f0';
-							context.font = '15px sans-serif';
-							context.fillText(randomLetter, x * letterSize, (centerY + yOffset) * letterSize);
-							context.fillText(randomLetter, x * letterSize, (centerY - yOffset) * letterSize);
+							drawLetter(x, centerY + yOffset);
+							drawLetter(x, centerY - yOffset);
 							
 							if (x < centerX) {
 								yOffset++;
@@ -229,10 +223,7 @@
 							for (var y = centerY - click.radius; y <= centerY + click.radius; y++) {
 								var distSquared = (x - centerX) ** 2 + (y - centerY) ** 2;
 								if (radiusSquared <= distSquared && distSquared < nextRadiusSquared) {
-									var randomLetter = letters[Math.floor(Math.random()*letters.length)];
-									context.fillStyle = '#0f0';
-									context.font = '15px sans-serif';
-									context.fillText(randomLetter, x * letterSize, y * letterSize);
+									drawLetter(x, y);
 								}
 							}						
 						}
@@ -243,6 +234,14 @@
 						matrixClicks.splice(i, 1);
 					}
 				}
+			}
+			
+			/* Draws a random letter at the (x,y) index of the matrix grid. */
+			function drawLetter(x, y) {
+				var randomLetter = letters[Math.floor(Math.random()*letters.length)];
+				context.fillStyle = '#0f0';
+				context.font = '15px sans-serif';
+				context.fillText(randomLetter, x * letterSize, y * letterSize);
 			}
 			
 			function resize() {
