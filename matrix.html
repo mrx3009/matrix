@@ -66,6 +66,8 @@
 			]; 
 			
 			var drops = [];
+			var matrixClicks = [];
+			var clickMode = 'diamond';
 			var runMatrix = true;
 			var letters = [
 				'M', 'Ї', 'Љ', 'Њ', 'Ћ', 'Ќ', 'Ѝ', 'Ў', 'Џ', 'Б', 'Г', 'Д', 'Ж', 'И', 'Й', 'Л', 'П', 'Ф', 'Ц', 'Ч', 'Ш', 'Щ', 'Ъ',
@@ -91,6 +93,7 @@
 			var context;
 		
 			typeWriter();
+			// startMatrix();
 			
 			function typeWriter() {
 				var text = messages[messageIndex];
@@ -115,7 +118,7 @@
 			function fade() {
 				window.removeEventListener('click', fade);
 				const div = document.querySelector('div')
-				div.style.animation = "fade-out 2s forwards";
+				div.style.animation = "fade-out 1s forwards";
 				
 				div.addEventListener('animationend', onFadeEnd);
 			}
@@ -133,7 +136,17 @@
 			function startMatrix() {
 				document.querySelector('div').remove();
 				window.onresize = resize;
-				window.onclick = () => { runMatrix = !runMatrix };
+				document.addEventListener('keydown', function(event) {
+					if (event.code == 'Space') {
+						runMatrix = !runMatrix;
+					} else if (event.code == 'ControlLeft') {
+						if (clickMode == 'diamond') {
+							clickMode = 'circle';
+						} else {
+							clickMode = 'diamond';
+						}
+					}
+				});
 				
 				canvas = document.createElement('canvas');
 				document.body.append(canvas);
@@ -141,6 +154,10 @@
 				
 				canvas.width = window.innerWidth;
 				canvas.height = window.innerHeight;
+				
+				canvas.addEventListener('mousedown', function (e) {
+					onCanvasClick(canvas, e);
+				});
 				
 				numColumns = canvas.width / letterSize;
 				numRows = canvas.height / letterSize;
@@ -151,6 +168,13 @@
 				
 				// draw at 30 FPS
 				setInterval(draw, 33);
+			}
+			
+			function onCanvasClick(canvas, event) {
+				const rect = canvas.getBoundingClientRect();
+				const x = event.clientX - rect.left;
+				const y = event.clientY - rect.top;
+				matrixClicks.push({'x': x, 'y': y, 'radius': 0, 'mode': clickMode});
 			}
 			
 			function draw() {
@@ -170,6 +194,53 @@
 						}
 					} else {
 						drops[i] = Math.floor(Math.random() * -numRows);
+					}
+				}
+				
+				for (i in matrixClicks) {
+					click = matrixClicks[i];
+					var centerX = Math.floor(click.x / letterSize);
+					var centerY = Math.floor(click.y / letterSize);
+					
+					// diamond fill
+					if (click.mode == 'diamond') {
+						var yOffset = 0;
+						var bottomY = 0;
+						for (var x = centerX - click.radius; x <= centerX + click.radius; x++) {
+							var randomLetter = letters[Math.floor(Math.random()*letters.length)];
+							context.fillStyle = '#0f0';
+							context.font = '15px sans-serif';
+							context.fillText(randomLetter, x * letterSize, (centerY + yOffset) * letterSize);
+							context.fillText(randomLetter, x * letterSize, (centerY - yOffset) * letterSize);
+							
+							if (x < centerX) {
+								yOffset++;
+							} else {
+								yOffset--;
+							}
+						}
+					}
+					
+					// circle fill
+					if (click.mode == 'circle') {
+						var radiusSquared = click.radius ** 2;
+						var nextRadiusSquared = (click.radius + 1) ** 2;
+						for (var x = centerX - click.radius; x <= centerX + click.radius; x++) {
+							for (var y = centerY - click.radius; y <= centerY + click.radius; y++) {
+								var distSquared = (x - centerX) ** 2 + (y - centerY) ** 2;
+								if (radiusSquared <= distSquared && distSquared < nextRadiusSquared) {
+									var randomLetter = letters[Math.floor(Math.random()*letters.length)];
+									context.fillStyle = '#0f0';
+									context.font = '15px sans-serif';
+									context.fillText(randomLetter, x * letterSize, y * letterSize);
+								}
+							}						
+						}
+					}
+
+					click.radius++;
+					if (click.radius > numRows * 2 && click.radius > numColumns * 2) {
+						matrixClicks.splice(i, 1);
 					}
 				}
 			}
